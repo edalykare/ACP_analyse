@@ -1,0 +1,98 @@
+##--------------------------------------- ACP  ------------------------------------------------##
+
+##----------------------- Chargement des packages --------------------------
+library(factoextra)
+library(FactoMineR)
+library(corrplot)
+library(MASS)
+library(randomForest)
+library(corrplot)
+
+
+##----------------------- chargement du jeu de donnéeS ---------------------------------------------------------------mek
+table <- read.csv("C:/Users/c59mkar/Documents/Tables/table eda.csv")
+
+View(table)
+summary(table)
+
+##--------- Scatter plot matrice de correlation -----------------
+pairs(table[,-1],pch=19) ##----------------- Attention! consomme énormément de ressource selon les données
+
+##----------Matrice de correlation---------------------
+cor_mat<-cor(table[,c(-1,-2)])
+corrplot(cor_mat,is.corr=FALSE)
+
+#---Normalisation des données
+dec_scale<-as.data.frame(scale(table), center = TRUE, scale = TRUE)
+
+##---------------ACP et visualisation-------------------
+table_pca<-PCA(dec_scale,graph=FALSE)
+
+##-----------Cercle de corrélation ---------------------
+fviz_pca_var(table_pca,col.var="cos2", gradient.cols=c("blue","black","red"),repel=TRUE)
+
+##-----------récupéreration des nouvelles variables créées -----------
+var <- get_pca_var(table_pca)
+
+##----------- Evaluation de la qualité de représentation des variables
+fviz_cos2(table_pca,choice="var",axes=1:2) 
+
+##--------------- Contribution à la première dimension (choisir dans 'top' le nombre de variables à afficher)
+fviz_contrib(table_pca,choice="var",axes=1,top=4)
+
+##--------------- Contribution à la deuxieme dimension
+fviz_contrib(table_pca,choice="var",axes=2,top=4)
+
+
+##--------------- Representation des entreprises sur le premier plan (Attention !! Consomme beaucoup de ressources selon la taille de la base)
+ind<-get_pca_ind(table_pca)
+fviz_pca_ind(table_pca)
+fviz_pca_ind(table_pca,col.ind="cos2", gradient.cols=c("green","blue","red"),
+             repel=TRUE)
+
+##---------------contribution des individus sur les dimensions 1 et 2 chaque (Régler sur 'top' le nombre d'entreprises à afficher )
+fviz_contrib(table_pca,choice="ind",axes=1,top=3)
+fviz_contrib(table_pca,choice="ind",axes=2,top=3)
+corrplot(var$cos2, is.corr=FALSE)
+
+##------------Contributions des variables aux axes principaux
+corrplot(var$contrib, is.corr=FALSE)
+
+##------------Récupération des Valeurs propres ainsi que des vecteurs liés
+eig.val <- get_eigenvalue(table_pca) 
+eig.val
+
+##-------------VARIANCE EXPLIQUEE
+fviz_eig(table_pca, addlabels = TRUE, ylim = c(0, 50))
+
+##------------Coordonnées des individus si besoin
+table_pca$ind$coord[,1]
+
+table_pca$ind$coord[,2]
+
+table_pca$ind$coord[,3]
+
+##------------ Représentation  3D (!!Attention consomme beaucoup de ressources selon la taille)
+library(rgl)
+rgl.open()# Ouverture d'une fenêtre 
+arrowslwd <- 2
+pointscex <- 1.5
+scatter3d(table_pca$ind$coord[,1], table_pca$ind$coord[,2], table_pca$ind$coord[,3], pch = 19, cex = pointscex, #bty='b2',
+          xlab='',ylab='',zlab='',
+          main = "", 
+          col='red')
+
+# Etape 1 - définir l'adresse de sauvegarde avec la commande setwd 
+setwd("C:/Users/c59mkar/Pictures/resultats acp")
+
+# Etape 2 - tracer le graphique  
+plot3d(table_pca$ind$coord[,1], table_pca$ind$coord[,2], table_pca$ind$coord[,3],type="s",radius=0.2,col="red") 
+
+# Etape 3 - Sauvegarder n gifs en faisant varier l'angle progressivement... 
+for (i in 1:45) { 
+  rgl.viewpoint(i, 20) 
+  filename <- paste("pic", formatC(i, digits = 1, flag = "0"), ".png", sep = "") 
+  rgl.snapshot(filename) }
+
+
+##---------------------------------------MEK
